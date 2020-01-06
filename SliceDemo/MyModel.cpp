@@ -15,8 +15,9 @@ MyModel::MyModel(string file_path)
 }
 MyModel::~MyModel(){}
 
-void  MyModel::initModel()
+void  MyModel::initModel(string file_path)
 {
+	this->file_path = file_path;
 	readInToArray();
 	/*Simplify();
 	Simplify();
@@ -315,156 +316,7 @@ vector<int> MyModel::get_optimize_order(Point p, int layer_index) //得到跟当前点
 	return index_order;
 }
 
-void MyModel::output_gcode_2()
-{
-	output_number_of_polygon();
-	vector<Hoop> hoops;// = clipper_operation(2);
-	/*for (int i = 0 ; i < 5; i++)
-	{
-		/ *if (i<2)
-		{
-			hoops.push_back(clipper_operation(i,7.3)[0]);
-		}
-		else
-		{
-			hoops.push_back(clipper_operation(i, 8.5)[0]);
-		}* /
-		hoops.push_back(clipper_operation(i, 8.5)[0]);
-	}*/
 
-	hoops.push_back(clipper_operation(0, 8.3)[0]);
-	hoops.push_back(clipper_operation(1, 8.3)[0]);
-	hoops.push_back(clipper_operation(2, 8.3)[0]);
-	hoops.push_back(clipper_operation(3, 8.3)[0]);
-	hoops.push_back(clipper_operation(4, 8.3)[0]);
-
-
-	string temp;
-	ifstream infile;
-	infile.open("start.txt");
-	string name = "output_";
-	string filename = name + "one_layer.nc";
-	ofstream outfile;
-	outfile.open(filename);
-	if (!infile.is_open())
-	{
-		cout << "未成功打开文件" << endl;
-	}
-	while (getline(infile, temp))
-	{
-		outfile << temp << endl;
-	}
-	infile.close();
-
-
-
-	for (size_t i = 0; i < hoops.size(); i++) //i <hoops.size()
-	{
-		
-		double theta;
-		Point p;
-		int start_i = 0;
-		double x = hoops[start_i][0].x;
-		double y = hoops[start_i][0].y;
-		double z = hoops[start_i][0].z;
-		p = Point(x, y, z);
-		Point cyl_point = get_cylindrical_coordinates(p);
-		theta = cyl_point.y;
-		
-
-		if (false)
-		{
-			continue;
-		}
-		else
-		{
-
-			//跟本身的前后关系
-			for (size_t j = 0; j < hoops[i].size(); j++)
-			{
-				
-				if (i % 2 == 0)
-				{
-					double x = hoops[i][j].x;
-					double y = hoops[i][j].y;
-					double z = hoops[i][j].z;
-					Point cyl_point = get_cylindrical_coordinates(Point(x, y, z));
-					double output_x = cyl_point.z;
-					double output_y;
-					if (cyl_point.y < theta)
-					{
-						output_y = (cyl_point.y - theta + 2 * PI) * 15;
-					}
-					else
-					{
-						output_y = (cyl_point.y - theta) * 15;
-					}
-
-					double output_z = cyl_point.x;
-					Point p_current = Point(output_x, output_y, output_z);
-
-
-
-					if (true)//output_y >= 1 && output_y <= 100
-					{
-						//cout << setiosflags(ios::fixed) << setprecision(4) << std::fixed << x << endl;
-						outfile << "X" << setiosflags(ios::fixed) << setprecision(4) << output_x;
-						outfile << " Y" << setiosflags(ios::fixed) << setprecision(4) << output_y;
-						outfile << " Z" << setiosflags(ios::fixed) << setprecision(4) << output_z << endl;
-						//outfile << " X" << output_x << " Y" << output_y << " Z" << output_z << endl;
-					}
-
-				}
-				else
-				{
-					double x = hoops[i][hoops[i].size() - j - 1].x;
-					double y = hoops[i][hoops[i].size() - j - 1].y;
-					double z = hoops[i][hoops[i].size() - j - 1].z;
-					Point cyl_point = get_cylindrical_coordinates(Point(x, y, z));
-					double output_x = cyl_point.z;
-					double output_y;
-					if (cyl_point.y < theta)
-					{
-						output_y = (cyl_point.y - theta + 2 * PI) * 15;
-					}
-					else
-					{
-						output_y = (cyl_point.y - theta) * 15;
-					}
-
-					double output_z = cyl_point.x;
-					Point p_current = Point(output_x, output_y, output_z);
-
-
-
-					if (true)//output_y >= 1 && output_y <= 100
-					{
-						
-						outfile << "X" << setiosflags(ios::fixed) << setprecision(4) << output_x;
-						outfile << " Y" << setiosflags(ios::fixed) << setprecision(4) << output_y;
-						outfile << " Z" << setiosflags(ios::fixed) << setprecision(4) << output_z << endl;
-						
-					}
-
-
-				}
-			}			
-		}
-	}
-
-
-	infile.open("end.txt");
-	if (!infile.is_open())
-	{
-		cout << "未成功打开文件" << endl;
-	}
-	while (getline(infile, temp))
-	{
-		outfile << temp << endl;
-	}
-	infile.close();
-	outfile.close();
-}
 
 void MyModel::output_gcode()
 {
@@ -488,7 +340,7 @@ void MyModel::output_gcode()
 	}
 	infile.close();
 
-	output_number_of_polygon();
+	init_layers();
 
 
 	for (size_t i = 32; i < hoops.size(); i++) //i <hoops.size()
@@ -584,37 +436,7 @@ void MyModel::output_gcode()
 			}
 			//index_number++;
 		}
-	
-	
-		/*else if (i % 2 == 1)
-		{
-			for (size_t j = 0; j <= hoops[i].size() - 1; j++)
-			{
-				double x = hoops[i][index_order[j]].x; //hoops[i].size() - 1 - j
-				double y = hoops[i][index_order[j]].y;
-				double z = hoops[i][index_order[j]].z;
-				Point cyl_point = get_cylindrical_coordinates(Point(x, y, z));
-				double output_x = cyl_point.z;
-				double output_y;
-				if (j == hoops[i].size() - 1)
-				{
-					cout << "theta:" << theta << endl;
-					cout << "cyl_point:" << cyl_point.y << endl;
-				}
-				if (cyl_point.y < theta)
-				{
-					output_y = (cyl_point.y - theta + 2 * PI) * 15;
-				}
-				else
-				{
-					output_y = (cyl_point.y - theta) * 15;
-				}
-
-				double output_z = cyl_point.x;
-				outfile << " X" << output_x << " Y" << output_y << " Z" << output_z << endl;
-
-			}
-		}*/
+		
 	}
 
 
@@ -631,7 +453,7 @@ void MyModel::output_gcode()
 	outfile.close();
 }
 
-void MyModel::output_gcode_3()
+void MyModel::output_gcode_whole()
 {
 	vector<Hoop> hoops = merge();
 
@@ -846,7 +668,7 @@ void MyModel::output_gcode_3()
 	outfile.close();
 }
 
-void MyModel::output_number_of_polygon()
+void MyModel::init_layers()
 {
 	double z_formor = original_hoops[0][0].z;
 	int index = 0;
@@ -863,12 +685,7 @@ void MyModel::output_number_of_polygon()
 			
 			layers.push_back(current_layer);
 			
-			//std::cout << std::endl;
-			//std::cout << "layer:" << layers.size()-1 << " z=" << z <<"  Hoop index:" ;
-			for (int j = 0 ; j < current_layer.size(); j++)
-			{
-				//std::cout << " " << current_layer[j];
-			}
+			
 			index++;
 			z_formor = z;
 			current_layer.clear();
@@ -882,6 +699,25 @@ void MyModel::output_number_of_polygon()
 		}
 	}
 	
+}
+
+void MyModel::output_layers()
+{
+	if (layers.empty())
+	{
+		cout << "'layers'  hasn't been initialized" << endl;
+		return;
+	}
+	for (size_t i = 0; i < layers.size(); i++)
+	{
+		std::cout << "layer:" << layers.size()-1 << " z=" << original_hoops[layers[i][0]][0].z <<"  Hoop index:" ;
+
+		for (int j = 0; j < layers[i].size(); j++)
+		{
+			std::cout << " " << layers[i][j];
+		}
+		std::cout << std::endl;
+	}
 }
 
 vector<Hoop> MyModel::clipper_operation(int layer_index , double R)
@@ -903,7 +739,7 @@ vector<Hoop> MyModel::clipper_operation(int layer_index , double R)
 	clipper.Execute(ctUnion, out_polys, pftEvenOdd, pftEvenOdd);
 	
 	new_hoops = paths2hoops(out_polys, 0.5 * layer_index + 0.5-15.1794);
-	//hoop1.AddPath(original_hoops[0],PolyType,true);
+	
 	return new_hoops;
 }
 
@@ -952,43 +788,10 @@ vector<Hoop> MyModel::paths2hoops(ClipperLib::Paths polys, double polys_z)
 	return new_hoops;
 }
 
-void MyModel::output_start()
-{
-	
-	/*infile.open("start.txt");
-	string name = "output_";
-	string filename = name + "one_layer.nc";
-	
-	outfile.open(filename);
-	if (!infile.is_open())
-	{
-		cout << "未成功打开文件" << endl;
-	}
-	/ *while (getline(infile, temp))
-	{
-		outfile << temp << endl;
-	}* /
-	infile.close();*/
-}
-
-void MyModel::output_end()
-{
-	/*infile.open("end.txt");
-	if (!infile.is_open())
-	{
-		cout << "未成功打开文件" << endl;
-	}
-	/ *while (getline(infile, temp))
-	{
-		outfile << temp << endl;
-	}* /
-	infile.close();
-	outfile.close();*/
-}
 
 vector<Hoop> MyModel::merge()
 {
-	output_number_of_polygon();
+	init_layers();
 	vector<Hoop> new_hoops;// = clipper_operation(2);
 	new_hoops.push_back(clipper_operation(0, 8.3)[0]);
 	new_hoops.push_back(clipper_operation(1, 8.3)[0]);

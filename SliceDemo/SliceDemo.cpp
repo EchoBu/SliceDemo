@@ -74,7 +74,8 @@ void mouseCB(int button, int state, int x, int y)
 
 void mouseMotionCB(int x, int y)
 {
-	cameraAngleX = cameraAngleY = 0;
+	cameraAngleX =  0;
+	cameraAngleY =  0;
 	cameraDistanceX = cameraDistanceY = 0;
 
 	if (mouseLeftDown)
@@ -120,7 +121,7 @@ void init(void)
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
-
+	
 }
 
 
@@ -143,36 +144,64 @@ void reshape(int w, int h)
 void drawHoop()
 {
 	
-	//vector<Hoop> hoops = model.get_original_hoops();	
+	vector<Hoop> hoops = model.merge_newway();	//原始的get_original_hoops
+	//vector<Hoop> hoops = model.output_gcode_newway();
+	//vector<Hoop> hoops = model.clipper_operation(11,8.5);//最底下裁剪其中一层的
 
-	//vector<Hoop> hoops = model.clipper_operation(3,8.5);
+	/*vector<Hoop> hoops;	
+	hoops.push_back(model.getGcode_one(11));
+	hoops.push_back(model.stepThree(11));*/
 
-	vector<Hoop> hoops = model.merge();
 	for (size_t i = 0; i < hoops.size(); i++) //i < hoops.size()
-	{		
-		glBegin(GL_LINE_LOOP);
+	{
+		glBegin(GL_LINE_STRIP);
 		for (size_t j = 0; j < hoops[i].size(); j++) //j < hoops[i].size()
 		{
-			double x = hoops[i][j].x/30;
-			double y = hoops[i][j].y/30;
-			double z = hoops[i][j].z/30;
+			double x = hoops[i][j].x / 30;
+			double y = hoops[i][j].y / 30 ; //-1.2去掉 //double y = hoops[i][j].y / 30 /180 * PI * 20 - 1.5
+			double z = hoops[i][j].z / 30;
 			Point a = Point(x, y, z);
 
 			glVertex3d(a.x, a.y, a.z);
 		}
-		glEnd();			
+		glEnd();
 	}
 
+	/*vector<Hoop> hoops;
+	hoops.push_back(model.getGcode_one(11));
+	
+	//hoops.push_back(model.stepOne(11));
+	//hoops.push_back(model.stepTwo(11));
+	hoops.push_back(model.stepThree(11));
+	//model.stepThree(10);
+
+	
+	for (size_t i = 0; i < hoops.size(); i++) //i < hoops.size()
+	{		
+		glBegin(GL_LINE_STRIP);
+		for (size_t j = 0; j < hoops[i].size(); j++) //j < hoops[i].size()
+		{
+			double x = hoops[i][j].x/30;
+			double y = hoops[i][j].y/30-1.2;
+			double z = hoops[i][j].z/30;
+			Point a = Point(x, y, z);
+
+			glVertex2d( a.y, a.z);
+		}
+		glEnd();
+	}
+	*/
 }
 void display(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	//glTranslatef(0.0, 0.0, 0.0);//平移
 	glScalef(times, times, times);//缩放
-								  //glRotatef(-90, 1, 0, 0);//旋转
-	glTranslatef(cameraDistanceX, cameraDistanceY, 0);
-	glRotatef(cameraAngleX, 1, 0, 0);
+	
+	glTranslatef(cameraDistanceX, cameraDistanceY, 0);//平移
+	glRotatef(cameraAngleY, 1, 0, 0);
 	glRotatef(cameraAngleY, 0, 1, 0);
+	
 	glColor3f(1.0, 0.0, 0.0);
 	drawHoop();
 	
@@ -182,9 +211,11 @@ void display(void)
 //输出gcode；
 void output_gcode()
 {	
-	model.output_gcode_whole();
+	//model.output_gcode_whole();
+	//model.getFinalResult();
+	model.getFinalResult_newway();
 	model.output_layers();//输出每层hoop的分布
-	//model.output_gcode_2();
+	////model.output_gcode_2();
 }
 
 int main(int argc, char* argv[])
@@ -194,10 +225,10 @@ int main(int argc, char* argv[])
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);      //设置初始显示模式
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(600, 600);
-	glutCreateWindow("***************");
+	glutCreateWindow("窗口");
 	init();
 	model = MyModel();//
-	model.initModel("F:\\slicer_layers129.txt");
+	model.initModel("F:\\hediao2.txt");//F:\\heshang.txt    slicer_layers_R1_5.txt
 	output_gcode();
 	
 	glutMouseFunc(mouseCB);
@@ -206,6 +237,7 @@ int main(int argc, char* argv[])
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
 	glutMainLoop();
+	
 	return 0;
 
 }
